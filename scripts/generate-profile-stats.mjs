@@ -297,57 +297,87 @@ function getLanguageTotals(repositories) {
   return [...totals.values()].sort((a, b) => b.size - a.size);
 }
 
+function calculateGrade({ stars, commits, prs, issues, contributions }) {
+  const totalContributions =
+    contributions.contributionCalendar.totalContributions;
+  const score =
+    commits * 1 +
+    prs * 3 +
+    issues * 2 +
+    stars * 4 +
+    totalContributions * 0.5;
+
+  if (score >= 2000) return "A++";
+  if (score >= 1000) return "A+";
+  if (score >= 500) return "A";
+  if (score >= 250) return "B+";
+  if (score >= 100) return "B";
+  return "C";
+}
+
+function gradeArc(grade) {
+  const arcs = {
+    "A++": 0.97,
+    "A+": 0.88,
+    A: 0.75,
+    "B+": 0.62,
+    B: 0.50,
+    C: 0.35,
+  };
+  const pct = arcs[grade] || 0.5;
+  const r = 35;
+  const cx = 370;
+  const cy = 100;
+  const angle = pct * 360;
+  const rad = (angle - 90) * (Math.PI / 180);
+  const ex = cx + r * Math.cos(rad);
+  const ey = cy + r * Math.sin(rad);
+  const large = angle > 180 ? 1 : 0;
+  return `M${cx} ${cy - r}A${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+}
+
 function statsSvg({ stars, commits, prs, issues, contributions }) {
   const totalContributions =
     contributions.contributionCalendar.totalContributions;
-  const privateCount = contributions.restrictedContributionsCount;
-  const scope =
-    TOKEN_SOURCE === "GITHUB_TOKEN"
-      ? "Workflow token scope"
-      : "Token-visible scope";
+  const contributedTo =
+    contributions.totalRepositoriesWithContributedCommits || 0;
+
+  const grade = calculateGrade({ stars, commits, prs, issues, contributions });
 
   const rows = [
-    ["Total Stars Earned", stars],
-    ["Total Commits", commits],
-    ["Total PRs", prs],
-    ["Total Issues", issues],
-    ["Contributions (last year)", totalContributions],
-    ["Private/Restricted", privateCount],
+    ["☆", "Total Stars", stars],
+    ["⊙", "Total Commits", commits],
+    ["⎇", "Total PRs", prs],
+    ["●", "Total Issues", issues],
+    ["◈", "Contributed to", contributedTo],
   ];
 
   const rowText = rows
     .map(
-      ([label, value], index) => `
-        <text x="44" y="${65 + index * 18}" class="label">${escapeXml(
-          label
-        )}:</text>
-        <text x="292" y="${65 + index * 18}" class="value">${compactNumber(
-          value
-        )}</text>
-        <circle cx="26" cy="${61 + index * 18}" r="4" fill="${
-          index % 2 === 0 ? COLORS.accent : COLORS.title
-        }"/>`
+      ([icon, label, value], index) => `
+        <text x="28" y="${78 + index * 22}" class="icon">${icon}</text>
+        <text x="48" y="${78 + index * 22}" class="label">${escapeXml(label)}:</text>
+        <text x="280" y="${78 + index * 22}" class="value">${compactNumber(value)}</text>`
     )
     .join("");
 
   return `
-<svg width="400" height="165" viewBox="0 0 400 165" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="420" height="195" viewBox="0 0 420 195" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">${escapeXml(USERNAME)} GitHub Stats</title>
   <desc id="desc">Profile statistics generated from the GitHub API.</desc>
   <style>
-    .title { fill: ${COLORS.title}; font: 600 14px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
-    .label { fill: ${COLORS.text}; font: 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
-    .value { fill: ${COLORS.text}; font: 600 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: end; }
-    .scope { fill: ${COLORS.muted}; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
-    .live { fill: ${COLORS.title}; font: 700 18px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+    .title { fill: ${COLORS.title}; font: 600 15px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .icon { fill: ${COLORS.muted}; font: 13px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .label { fill: ${COLORS.text}; font: 600 13px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .value { fill: ${COLORS.text}; font: 700 13px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: end; }
+    .grade { fill: ${COLORS.title}; font: 700 22px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
   </style>
-  <rect x="0.5" y="0.5" width="399" height="164" rx="4" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
-  <text x="24" y="30" class="title">${escapeXml(USERNAME)}'s GitHub Stats</text>
+  <rect x="0.5" y="0.5" width="419" height="194" rx="6" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
+  <text x="24" y="40" class="title">My GitHub Statistics</text>
   ${rowText}
-  <circle cx="350" cy="82" r="35" stroke="${COLORS.grid}" stroke-width="5"/>
-  <path d="M350 47a35 35 0 1 1-29.7 16.5" stroke="${COLORS.title}" stroke-width="5" stroke-linecap="round"/>
-  <text x="350" y="88" class="live">API</text>
-  <text x="350" y="118" class="scope" text-anchor="middle">${escapeXml(scope)}</text>
+  <circle cx="370" cy="100" r="35" stroke="${COLORS.grid}" stroke-width="5"/>
+  <path d="${gradeArc(grade)}" stroke="${COLORS.title}" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <text x="370" y="108" class="grade">${grade}</text>
 </svg>
 `.trimStart();
 }
@@ -357,10 +387,11 @@ function languagesSvg(languages) {
   const total = topLanguages.reduce((sum, language) => sum + language.size, 0);
   let offset = 0;
 
+  const barWidth = 310;
   const segments = topLanguages
     .map((language) => {
-      const width = total ? (language.size / total) * 280 : 0;
-      const segment = `<rect x="${30 + offset}" y="56" width="${width.toFixed(
+      const width = total ? (language.size / total) * barWidth : 0;
+      const segment = `<rect x="${30 + offset}" y="${62}" width="${width.toFixed(
         2
       )}" height="8" fill="${language.color}" />`;
       offset += width;
@@ -370,35 +401,35 @@ function languagesSvg(languages) {
 
   const legend = topLanguages
     .map((language, index) => {
-      const x = index % 2 === 0 ? 30 : 175;
-      const y = 90 + Math.floor(index / 2) * 25;
+      const x = index % 2 === 0 ? 30 : 200;
+      const y = 100 + Math.floor(index / 2) * 25;
       const percentage = total ? (language.size / total) * 100 : 0;
       return `
         <circle cx="${x}" cy="${y - 4}" r="5" fill="${language.color}"/>
-        <text x="${x + 12}" y="${y}" class="legend">${escapeXml(
+        <text x="${x + 14}" y="${y}" class="legend">${escapeXml(
         language.name
-      )} ${percentage.toFixed(2)}%</text>`;
+      )} (${percentage.toFixed(2)}%)</text>`;
     })
     .join("");
 
   return `
-<svg width="400" height="165" viewBox="0 0 400 165" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="420" height="195" viewBox="0 0 420 195" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">Most Used Languages</title>
   <desc id="desc">Language percentages across visible owned repositories.</desc>
   <style>
-    .title { fill: ${COLORS.title}; font: 600 14px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .title { fill: ${COLORS.title}; font: 600 15px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
     .legend { fill: ${COLORS.text}; font: 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
     .note { fill: ${COLORS.muted}; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
   </style>
-  <rect x="0.5" y="0.5" width="399" height="164" rx="4" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
-  <text x="30" y="34" class="title">Most Used Languages</text>
-  <clipPath id="bar"><rect x="30" y="56" width="280" height="8" rx="4"/></clipPath>
+  <rect x="0.5" y="0.5" width="419" height="194" rx="6" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
+  <text x="30" y="40" class="title">My Programming Languages</text>
+  <clipPath id="bar"><rect x="30" y="62" width="${barWidth}" height="8" rx="4"/></clipPath>
   <g clip-path="url(#bar)">
-    <rect x="30" y="56" width="280" height="8" fill="${COLORS.grid}"/>
+    <rect x="30" y="62" width="${barWidth}" height="8" fill="${COLORS.grid}"/>
     ${segments}
   </g>
   ${legend}
-  <text x="30" y="150" class="note">Generated from token-visible repositories</text>
+  <text x="30" y="182" class="note">Generated from token-visible repositories</text>
 </svg>
 `.trimStart();
 }
@@ -409,28 +440,28 @@ function streakSvg(calendar) {
   const total = calendar.totalContributions;
 
   return `
-<svg width="535" height="210" viewBox="0 0 535 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="535" height="195" viewBox="0 0 535 195" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">GitHub Streak</title>
   <desc id="desc">Current and longest contribution streaks from GitHub contribution calendar.</desc>
   <style>
-    .num { fill: ${COLORS.text}; font: 700 24px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+    .num { fill: ${COLORS.text}; font: 700 26px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
     .label { fill: ${COLORS.text}; font: 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
     .accent { fill: ${COLORS.title}; font: 700 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
     .date { fill: ${COLORS.muted}; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
   </style>
-  <rect x="0.5" y="0.5" width="534" height="209" rx="4" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
-  <line x1="172" y1="35" x2="172" y2="176" stroke="${COLORS.border}"/>
-  <line x1="363" y1="35" x2="363" y2="176" stroke="${COLORS.border}"/>
-  <text x="86" y="90" class="num">${compactNumber(total)}</text>
-  <text x="86" y="122" class="label">Total Contributions</text>
-  <text x="86" y="148" class="date">${formatDateRange(days[0]?.date, days.at(-1)?.date)}</text>
-  <circle cx="267" cy="88" r="34" stroke="${COLORS.title}" stroke-width="4"/>
-  <text x="267" y="94" class="num">${streaks.current.count}</text>
-  <text x="267" y="126" class="accent">Current Streak</text>
-  <text x="267" y="150" class="date">${formatDateRange(streaks.current.start, streaks.current.end)}</text>
-  <text x="449" y="90" class="num">${streaks.longest.count}</text>
-  <text x="449" y="122" class="label">Longest Streak</text>
-  <text x="449" y="148" class="date">${formatDateRange(streaks.longest.start, streaks.longest.end)}</text>
+  <rect x="0.5" y="0.5" width="534" height="194" rx="6" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
+  <line x1="178" y1="30" x2="178" y2="168" stroke="${COLORS.border}"/>
+  <line x1="357" y1="30" x2="357" y2="168" stroke="${COLORS.border}"/>
+  <text x="89" y="82" class="num">${compactNumber(total)}</text>
+  <text x="89" y="112" class="label">Total Contributions</text>
+  <text x="89" y="138" class="date">${formatDateRange(days[0]?.date, days.at(-1)?.date)}</text>
+  <circle cx="267" cy="78" r="32" stroke="${COLORS.title}" stroke-width="4" fill="none"/>
+  <text x="267" y="86" class="num">${streaks.current.count}</text>
+  <text x="267" y="118" class="accent">Current Streak</text>
+  <text x="267" y="142" class="date">${formatDateRange(streaks.current.start, streaks.current.end)}</text>
+  <text x="446" y="82" class="num">${streaks.longest.count}</text>
+  <text x="446" y="112" class="label">Longest Streak</text>
+  <text x="446" y="138" class="date">${formatDateRange(streaks.longest.start, streaks.longest.end)}</text>
 </svg>
 `.trimStart();
 }

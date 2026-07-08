@@ -163,17 +163,22 @@ Este reto formó parte de la HackIAthon y nos ayudó a llegar a los <b>18 finali
 
 ---
 
-## 📊 GitHub Stats
+## 📊 GitHub Analytics
 
 <div align="center">
 
-<img height="165" src="./assets/stats/github-stats.svg" alt="GitHub Stats" />
+<table>
+  <tr>
+    <td>
+      <img src="./assets/stats/github-stats.svg" alt="GitHub Stats" />
+    </td>
+    <td>
+      <img src="./assets/stats/top-langs.svg" alt="Top Languages" />
+    </td>
+  </tr>
+</table>
 
-<img height="165" src="./assets/stats/top-langs.svg" alt="Top Languages" />
-
-<br>
-
-<img height="175" src="./assets/stats/github-streak.svg" alt="GitHub Streak" />
+<img width="535" src="./assets/stats/github-streak.svg" alt="GitHub Streak" />
 
 </div>
 
