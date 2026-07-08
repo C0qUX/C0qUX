@@ -1,0 +1,30 @@
+<svg width="400" height="165" viewBox="0 0 400 165" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Most Used Languages</title>
+  <desc id="desc">Language percentages across visible owned repositories.</desc>
+  <style>
+    .title { fill: #38BDF8; font: 600 14px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .legend { fill: #C9D1D9; font: 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .note { fill: #8B949E; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+  </style>
+  <rect x="0.5" y="0.5" width="399" height="164" rx="4" fill="#0D1117" stroke="#30363D"/>
+  <text x="30" y="34" class="title">Most Used Languages</text>
+  <clipPath id="bar"><rect x="30" y="56" width="280" height="8" rx="4"/></clipPath>
+  <g clip-path="url(#bar)">
+    <rect x="30" y="56" width="280" height="8" fill="#21262D"/>
+    <rect x="30" y="56" width="142.07" height="8" fill="#3178c6" /><rect x="172.07183749592824" y="56" width="47.51" height="8" fill="#3572A5" /><rect x="219.58609662784036" y="56" width="42.96" height="8" fill="#663399" /><rect x="262.5453535136332" y="56" width="37.58" height="8" fill="#f1e05a" /><rect x="300.1257613918701" y="56" width="8.23" height="8" fill="#178600" /><rect x="308.35588323585955" y="56" width="1.64" height="8" fill="#384d54" />
+  </g>
+  
+        <circle cx="30" cy="86" r="5" fill="#3178c6"/>
+        <text x="42" y="90" class="legend">TypeScript 50.74%</text>
+        <circle cx="175" cy="86" r="5" fill="#3572A5"/>
+        <text x="187" y="90" class="legend">Python 16.97%</text>
+        <circle cx="30" cy="111" r="5" fill="#663399"/>
+        <text x="42" y="115" class="legend">CSS 15.34%</text>
+        <circle cx="175" cy="111" r="5" fill="#f1e05a"/>
+        <text x="187" y="115" class="legend">JavaScript 13.42%</text>
+        <circle cx="30" cy="136" r="5" fill="#178600"/>
+        <text x="42" y="140" class="legend">C# 2.94%</text>
+        <circle cx="175" cy="136" r="5" fill="#384d54"/>
+        <text x="187" y="140" class="legend">Dockerfile 0.59%</text>
+  <text x="30" y="150" class="note">Generated from token-visible repositories</text>
+</svg>

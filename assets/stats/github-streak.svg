@@ -1,0 +1,23 @@
+<svg width="535" height="210" viewBox="0 0 535 210" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">GitHub Streak</title>
+  <desc id="desc">Current and longest contribution streaks from GitHub contribution calendar.</desc>
+  <style>
+    .num { fill: #C9D1D9; font: 700 24px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+    .label { fill: #C9D1D9; font: 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+    .accent { fill: #38BDF8; font: 700 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+    .date { fill: #8B949E; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+  </style>
+  <rect x="0.5" y="0.5" width="534" height="209" rx="4" fill="#0D1117" stroke="#30363D"/>
+  <line x1="172" y1="35" x2="172" y2="176" stroke="#30363D"/>
+  <line x1="363" y1="35" x2="363" y2="176" stroke="#30363D"/>
+  <text x="86" y="90" class="num">195</text>
+  <text x="86" y="122" class="label">Total Contributions</text>
+  <text x="86" y="148" class="date">Jun 22 - Jun 23</text>
+  <circle cx="267" cy="88" r="34" stroke="#38BDF8" stroke-width="4"/>
+  <text x="267" y="94" class="num">4</text>
+  <text x="267" y="126" class="accent">Current Streak</text>
+  <text x="267" y="150" class="date">Jun 20 - Jun 23</text>
+  <text x="449" y="90" class="num">5</text>
+  <text x="449" y="122" class="label">Longest Streak</text>
+  <text x="449" y="148" class="date">Jun 8 - Jun 12</text>
+</svg>

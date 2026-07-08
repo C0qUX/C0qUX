@@ -1,0 +1,51 @@
+name: Update Profile Stats
+
+on:
+  schedule:
+    - cron: "23 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: 24
+
+      - name: Generate profile stats SVG files
+        env:
+          GITHUB_USERNAME: C0qUX
+          REQUIRE_PROFILE_STATS_TOKEN: "true"
+          PROFILE_STATS_TOKEN: ${{ secrets.PROFILE_STATS_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/generate-profile-stats.mjs
+
+      - name: Validate generated SVG files
+        run: |
+          if grep -R -E "Failed to retrieve|Something went wrong|Please try again|Cannot GET|GitHub REST request failed|GitHub GraphQL request failed" assets/stats/*.svg; then
+            echo "One or more generated SVG files contain an error response."
+            exit 1
+          fi
+
+      - name: Commit updated stats
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add assets/stats/*.svg
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update profile stats"
+            git push
+          fi
