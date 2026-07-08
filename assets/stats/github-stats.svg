@@ -10,22 +10,23 @@
   </style>
   <rect x="0.5" y="0.5" width="419" height="194" rx="6" fill="#0D1117" stroke="#30363D"/>
   <text x="24" y="40" class="title">My GitHub Statistics</text>
+  
         <text x="28" y="78" class="icon">☆</text>
         <text x="48" y="78" class="label">Total Stars:</text>
         <text x="280" y="78" class="value">1</text>
         <text x="28" y="100" class="icon">⊙</text>
         <text x="48" y="100" class="label">Total Commits:</text>
-        <text x="280" y="100" class="value">196</text>
+        <text x="280" y="100" class="value">152</text>
         <text x="28" y="122" class="icon">⎇</text>
         <text x="48" y="122" class="label">Total PRs:</text>
-        <text x="280" y="122" class="value">8</text>
+        <text x="280" y="122" class="value">7</text>
         <text x="28" y="144" class="icon">●</text>
         <text x="48" y="144" class="label">Total Issues:</text>
         <text x="280" y="144" class="value">4</text>
         <text x="28" y="166" class="icon">◈</text>
         <text x="48" y="166" class="label">Contributed to:</text>
-        <text x="280" y="166" class="value">16</text>
+        <text x="280" y="166" class="value">9</text>
   <circle cx="370" cy="100" r="35" stroke="#21262D" stroke-width="5"/>
-  <path d="M370 65A35 35 0 1 1 346.13 125.60" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M370 65A35 35 0 1 1 346.04 125.51" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" fill="none"/>
   <text x="370" y="108" class="grade">B+</text>
 </svg>

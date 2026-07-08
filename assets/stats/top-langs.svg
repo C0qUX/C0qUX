@@ -10,18 +10,19 @@
   <clipPath id="bar"><rect x="30" y="62" width="310" height="8" rx="4"/></clipPath>
   <g clip-path="url(#bar)">
     <rect x="30" y="62" width="310" height="8" fill="#21262D"/>
-    <rect x="30" y="62" width="157.29" height="8" fill="#3178c6" /><rect x="187.29" y="62" width="52.61" height="8" fill="#3572A5" /><rect x="239.90" y="62" width="47.58" height="8" fill="#663399" /><rect x="287.48" y="62" width="41.61" height="8" fill="#f1e05a" /><rect x="329.09" y="62" width="9.12" height="8" fill="#178600" /><rect x="338.21" y="62" width="1.82" height="8" fill="#384d54" />
+    <rect x="30" y="62" width="135.78" height="8" fill="#3178c6" /><rect x="165.78324523807774" y="62" width="46.76" height="8" fill="#f1e05a" /><rect x="212.5435023929073" y="62" width="45.41" height="8" fill="#3572A5" /><rect x="257.9546156277798" y="62" width="41.06" height="8" fill="#663399" /><rect x="299.01234681350024" y="62" width="39.42" height="8" fill="#178600" /><rect x="338.42865754592833" y="62" width="1.57" height="8" fill="#384d54" />
   </g>
+  
         <circle cx="30" cy="96" r="5" fill="#3178c6"/>
-        <text x="44" y="100" class="legend">TypeScript (50.74%)</text>
-        <circle cx="200" cy="96" r="5" fill="#3572A5"/>
-        <text x="214" y="100" class="legend">Python (16.97%)</text>
-        <circle cx="30" cy="121" r="5" fill="#663399"/>
-        <text x="44" y="125" class="legend">CSS (15.34%)</text>
-        <circle cx="200" cy="121" r="5" fill="#f1e05a"/>
-        <text x="214" y="125" class="legend">JavaScript (13.42%)</text>
+        <text x="44" y="100" class="legend">TypeScript (43.80%)</text>
+        <circle cx="200" cy="96" r="5" fill="#f1e05a"/>
+        <text x="214" y="100" class="legend">JavaScript (15.08%)</text>
+        <circle cx="30" cy="121" r="5" fill="#3572A5"/>
+        <text x="44" y="125" class="legend">Python (14.65%)</text>
+        <circle cx="200" cy="121" r="5" fill="#663399"/>
+        <text x="214" y="125" class="legend">CSS (13.24%)</text>
         <circle cx="30" cy="146" r="5" fill="#178600"/>
-        <text x="44" y="150" class="legend">C# (2.94%)</text>
+        <text x="44" y="150" class="legend">C# (12.71%)</text>
         <circle cx="200" cy="146" r="5" fill="#384d54"/>
-        <text x="214" y="150" class="legend">Dockerfile (0.59%)</text>
+        <text x="214" y="150" class="legend">Dockerfile (0.51%)</text>
 </svg>

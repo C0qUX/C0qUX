@@ -10,13 +10,13 @@
   <rect x="0.5" y="0.5" width="534" height="194" rx="6" fill="#0D1117" stroke="#30363D"/>
   <line x1="178" y1="30" x2="178" y2="168" stroke="#30363D"/>
   <line x1="357" y1="30" x2="357" y2="168" stroke="#30363D"/>
-  <text x="89" y="78" class="num">195</text>
+  <text x="89" y="78" class="num">206</text>
   <text x="89" y="108" class="label">Total Contributions</text>
-  <text x="89" y="134" class="date">Jun 22 - Jun 23</text>
+  <text x="89" y="134" class="date">Jul 6 - Jul 8</text>
   <circle cx="267" cy="68" r="28" stroke="#38BDF8" stroke-width="4" fill="none"/>
-  <text x="267" y="76" class="num">4</text>
+  <text x="267" y="76" class="num">1</text>
   <text x="267" y="118" class="accent">Current Streak</text>
-  <text x="267" y="142" class="date">Jun 20 - Jun 23</text>
+  <text x="267" y="142" class="date">Jul 8 - Jul 8</text>
   <text x="446" y="78" class="num">5</text>
   <text x="446" y="108" class="label">Longest Streak</text>
   <text x="446" y="134" class="date">Jun 8 - Jun 12</text>
