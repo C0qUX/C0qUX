@@ -12,11 +12,11 @@
   <line x1="357" y1="30" x2="357" y2="168" stroke="#30363D"/>
   <text x="89" y="78" class="num">207</text>
   <text x="89" y="108" class="label">Total Contributions</text>
-  <text x="89" y="134" class="date">Jul 6 - Jul 11</text>
+  <text x="89" y="134" class="date">Jul 13 - Jul 12</text>
   <circle cx="267" cy="68" r="28" stroke="#38BDF8" stroke-width="4" fill="none"/>
-  <text x="267" y="76" class="num">1</text>
+  <text x="267" y="76" class="num">0</text>
   <text x="267" y="118" class="accent">Current Streak</text>
-  <text x="267" y="142" class="date">Jul 11 - Jul 11</text>
+  <text x="267" y="142" class="date"></text>
   <text x="446" y="78" class="num">5</text>
   <text x="446" y="108" class="label">Longest Streak</text>
   <text x="446" y="134" class="date">Jun 8 - Jun 12</text>
