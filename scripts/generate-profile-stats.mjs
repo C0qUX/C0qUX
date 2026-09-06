@@ -228,14 +228,16 @@ function compactNumber(value) {
 
 function formatDateRange(start, end) {
   if (!start || !end) return "";
+  const startDate = new Date(`${start}T00:00:00Z`);
+  const endDate = new Date(`${end}T00:00:00Z`);
+  const crossesYears = startDate.getUTCFullYear() !== endDate.getUTCFullYear();
   const fmt = new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
+    ...(crossesYears ? { year: "numeric" } : {}),
     timeZone: "UTC",
   });
-  return `${fmt.format(new Date(`${start}T00:00:00Z`))} - ${fmt.format(
-    new Date(`${end}T00:00:00Z`)
-  )}`;
+  return `${fmt.format(startDate)} - ${fmt.format(endDate)}`;
 }
 
 function flattenDays(calendar) {
