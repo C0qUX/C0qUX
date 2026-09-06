@@ -39,6 +39,14 @@ const COLORS = {
   empty: "#161B22",
 };
 
+const CONTRIBUTION_COLORS = {
+  0: COLORS.empty,
+  1: "#0E4429",
+  2: "#006D32",
+  3: "#26A641",
+  4: "#39D353",
+};
+
 const apiHeaders = {
   Authorization: `Bearer ${TOKEN}`,
   Accept: "application/vnd.github+json",
@@ -46,44 +54,161 @@ const apiHeaders = {
   "User-Agent": `${USERNAME}-profile-stats`,
 };
 
-async function rest(pathname) {
-  const response = await fetch(`https://api.github.com${pathname}`, {
-    headers: apiHeaders,
-  });
+const sleep = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-  if (!response.ok) {
-    throw new Error(
-      `GitHub REST request failed: ${response.status} ${response.statusText} ${pathname}`
-    );
+function rateLimitDelay(headers, fallback) {
+  const retryAfter = Number(headers.get("retry-after"));
+  if (Number.isFinite(retryAfter) && retryAfter >= 0) {
+    return Math.max(1000, retryAfter * 1000);
   }
 
-  return response.json();
+  const resetAt = Number(headers.get("x-ratelimit-reset"));
+  if (Number.isFinite(resetAt) && resetAt > 0) {
+    return Math.max(1000, resetAt * 1000 - Date.now() + 1000);
+  }
+
+  return fallback;
 }
 
-async function graphql(query, variables = {}) {
-  const response = await fetch("https://api.github.com/graphql", {
-    method: "POST",
-    headers: {
-      ...apiHeaders,
-      Accept: "application/vnd.github+json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+async function rest(pathname, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response;
+    try {
+      response = await fetch(`https://api.github.com${pathname}`, {
+        headers: apiHeaders,
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw new Error(
+          `GitHub REST network failure after ${maxAttempts} attempts on ${pathname}: ${error.message}`
+        );
+      }
 
-  const json = await response.json();
+      const delay = 5000 * attempt;
+      console.warn(
+        `GitHub REST network failure on ${pathname}; retrying in ${delay / 1000}s ` +
+          `(attempt ${attempt}/${maxAttempts}).`
+      );
+      await sleep(delay);
+      continue;
+    }
 
-  if (!response.ok || json.errors) {
+    if (response.ok) return response.json();
+
+    const body = await response.text();
+    const remaining = response.headers.get("x-ratelimit-remaining");
+    const resetAt = response.headers.get("x-ratelimit-reset");
+    const retryAfter = response.headers.get("retry-after");
+    const isRateLimited =
+      response.status === 429 ||
+      (response.status === 403 &&
+        (remaining === "0" ||
+          retryAfter ||
+          body.toLowerCase().includes("rate limit")));
+    const isTransient = isRateLimited || response.status >= 500;
+
+    if (isTransient && attempt < maxAttempts) {
+      const delay = isRateLimited
+        ? rateLimitDelay(response.headers, 60000)
+        : 5000 * attempt;
+      console.warn(
+        `GitHub REST temporary failure on ${pathname}; retrying in ${Math.ceil(delay / 1000)}s ` +
+          `(attempt ${attempt}/${maxAttempts}, remaining=${remaining ?? "unknown"}).`
+      );
+      await sleep(delay);
+      continue;
+    }
+
     throw new Error(
-      `GitHub GraphQL request failed: ${JSON.stringify(
-        json.errors || json,
-        null,
-        2
-      )}`
+      `GitHub REST request failed: ${response.status} ${response.statusText} ${pathname}; ` +
+        `remaining=${remaining ?? "unknown"}; reset=${resetAt ?? "unknown"}; ` +
+        `response=${body.slice(0, 500)}`
     );
   }
 
-  return json.data;
+  throw new Error(`GitHub REST request failed after retries: ${pathname}`);
+}
+
+async function graphql(query, variables = {}, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response;
+    try {
+      response = await fetch("https://api.github.com/graphql", {
+        method: "POST",
+        headers: {
+          ...apiHeaders,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw new Error(
+          `GitHub GraphQL network failure after ${maxAttempts} attempts: ${error.message}`
+        );
+      }
+
+      const delay = 5000 * attempt;
+      console.warn(
+        `GitHub GraphQL network failure; retrying in ${delay / 1000}s ` +
+          `(attempt ${attempt}/${maxAttempts}).`
+      );
+      await sleep(delay);
+      continue;
+    }
+
+    const body = await response.text();
+    let json = null;
+    try {
+      json = JSON.parse(body);
+    } catch {
+      // Handled below as a transient non-JSON response.
+    }
+
+    if (response.ok && json?.data && !json.errors) return json.data;
+
+    const details = json
+      ? JSON.stringify(json.errors || json)
+      : `Non-JSON response: ${body.slice(0, 500)}`;
+    const remaining = response.headers.get("x-ratelimit-remaining");
+    const resetAt = response.headers.get("x-ratelimit-reset");
+    const retryAfter = response.headers.get("retry-after");
+    const isRateLimited =
+      response.status === 429 ||
+      remaining === "0" ||
+      details.toLowerCase().includes("rate limit") ||
+      (response.status === 403 && Boolean(retryAfter));
+    const isTransient =
+      isRateLimited ||
+      response.status >= 500 ||
+      !json ||
+      /no server is currently available|please try again|timed? out|temporar/i.test(
+        details
+      );
+
+    if (isTransient && attempt < maxAttempts) {
+      const delay = isRateLimited
+        ? rateLimitDelay(response.headers, 60000)
+        : 5000 * attempt;
+      console.warn(
+        `GitHub GraphQL temporary failure; retrying in ${Math.ceil(delay / 1000)}s ` +
+          `(attempt ${attempt}/${maxAttempts}).`
+      );
+      await sleep(delay);
+      continue;
+    }
+
+    throw new Error(
+      `GitHub GraphQL request failed: ${details}; ` +
+        `remaining=${remaining ?? "unknown"}; reset=${resetAt ?? "unknown"}`
+    );
+  }
+
+  throw new Error("GitHub GraphQL request failed after retries.");
 }
 
 function escapeXml(value) {
@@ -115,6 +240,152 @@ function formatDateRange(start, end) {
 
 function flattenDays(calendar) {
   return calendar.weeks.flatMap((week) => week.contributionDays);
+}
+
+function htmlAttribute(tag, name) {
+  return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+}
+
+async function getPublicContributionCalendar(maxAttempts = 3) {
+  // This is the same public calendar GitHub renders on the profile. It includes
+  // anonymized private contributions when the user has chosen to display them.
+  const url = `https://github.com/users/${encodeURIComponent(USERNAME)}/contributions`;
+  let html = "";
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "text/html",
+          "Accept-Language": "en",
+          "User-Agent": `${USERNAME}-profile-stats`,
+        },
+        signal: AbortSignal.timeout(30000),
+      });
+      html = await response.text();
+
+      if (response.ok) break;
+
+      const isRateLimited =
+        response.status === 429 ||
+        (response.status === 403 &&
+          html.toLowerCase().includes("rate limit"));
+      const isTransient = isRateLimited || response.status >= 500;
+
+      if (!isTransient || attempt === maxAttempts) {
+        throw new Error(
+          `GitHub public contribution calendar failed: ${response.status} ` +
+            `${response.statusText}; response=${html.slice(0, 300)}`
+        );
+      }
+
+      const delay = isRateLimited
+        ? rateLimitDelay(response.headers, 60000)
+        : 5000 * attempt;
+      console.warn(
+        `GitHub public calendar temporary failure; retrying in ${Math.ceil(delay / 1000)}s ` +
+          `(attempt ${attempt}/${maxAttempts}).`
+      );
+      await sleep(delay);
+    } catch (error) {
+      if (attempt === maxAttempts || /calendar failed:/.test(error.message)) {
+        throw error;
+      }
+
+      const delay = 5000 * attempt;
+      console.warn(
+        `GitHub public calendar network failure; retrying in ${delay / 1000}s ` +
+          `(attempt ${attempt}/${maxAttempts}).`
+      );
+      await sleep(delay);
+    }
+  }
+
+  const daysById = new Map();
+  const dayTags = html.match(/<td\b[^>]*ContributionCalendar-day[^>]*>/g) || [];
+
+  for (const tag of dayTags) {
+    const id = htmlAttribute(tag, "id");
+    const date = htmlAttribute(tag, "data-date");
+    const level = Number(htmlAttribute(tag, "data-level"));
+    if (!id || !date || !Number.isInteger(level)) continue;
+
+    daysById.set(id, {
+      color: CONTRIBUTION_COLORS[level] || CONTRIBUTION_COLORS[4],
+      contributionCount: null,
+      date,
+      weekday: new Date(`${date}T00:00:00Z`).getUTCDay(),
+    });
+  }
+
+  const tooltipPattern = /<tool-tip\b[^>]*\bfor="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
+  for (const match of html.matchAll(tooltipPattern)) {
+    const day = daysById.get(match[1]);
+    if (!day) continue;
+
+    const label = match[2].replace(/<[^>]+>/g, " ").trim();
+    const count = label.match(/([\d,]+)\s+contributions?/i);
+    if (count) {
+      day.contributionCount = Number(count[1].replaceAll(",", ""));
+    } else if (/^No contributions\b/i.test(label)) {
+      day.contributionCount = 0;
+    }
+  }
+
+  const days = [...daysById.values()].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+  const hasCompleteDateRange = days.every((day, index) => {
+    if (index === 0) return true;
+    const previous = new Date(`${days[index - 1].date}T00:00:00Z`);
+    previous.setUTCDate(previous.getUTCDate() + 1);
+    return previous.toISOString().slice(0, 10) === day.date;
+  });
+  if (
+    days.length < 365 ||
+    days.length > 371 ||
+    !hasCompleteDateRange ||
+    days.some((day) => day.contributionCount === null)
+  ) {
+    throw new Error(
+      `Could not parse GitHub's public contribution calendar (${days.length} days found).`
+    );
+  }
+
+  const totalContributions = days.reduce(
+    (sum, day) => sum + day.contributionCount,
+    0
+  );
+  const headingTotal = html
+    .match(
+      /id="js-contribution-activity-description"[\s\S]{0,300}?([\d,]+)\s+contributions?/i
+    )?.[1]
+    ?.replaceAll(",", "");
+
+  if (!headingTotal) {
+    throw new Error("Could not parse GitHub's public contribution total.");
+  }
+
+  if (Number(headingTotal) !== totalContributions) {
+    throw new Error(
+      `GitHub public contribution total mismatch: heading=${headingTotal}, days=${totalContributions}.`
+    );
+  }
+
+  const weeksByStart = new Map();
+  for (const day of days) {
+    const weekStart = new Date(`${day.date}T00:00:00Z`);
+    weekStart.setUTCDate(weekStart.getUTCDate() - day.weekday);
+    const key = weekStart.toISOString().slice(0, 10);
+    const week = weeksByStart.get(key) || { contributionDays: [] };
+    week.contributionDays.push(day);
+    weeksByStart.set(key, week);
+  }
+
+  return {
+    totalContributions,
+    weeks: [...weeksByStart.values()],
+  };
 }
 
 function getStreaks(days) {
@@ -152,7 +423,25 @@ async function searchTotal(query) {
   return json.total_count;
 }
 
-async function searchCommitTotal() {
+async function completeCommitSearch(search, query, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const result = await search(query);
+    if (!result.incomplete_results) return result;
+
+    if (attempt < maxAttempts) {
+      const delay = 2000 * 2 ** (attempt - 1);
+      console.warn(
+        `GitHub commit search was incomplete; retrying in ${delay / 1000}s ` +
+          `(attempt ${attempt}/${maxAttempts}).`
+      );
+      await sleep(delay);
+    }
+  }
+
+  return null;
+}
+
+async function searchCommitTotal(accountCreatedAt) {
   const search = async (query) => {
     const params = new URLSearchParams({
       q: query,
@@ -161,21 +450,23 @@ async function searchCommitTotal() {
     return rest(`/search/commits?${params}`);
   };
 
-  const allTime = await search(`author:${USERNAME}`);
-  if (!allTime.incomplete_results) {
+  const allTime = await completeCommitSearch(search, `author:${USERNAME}`);
+  if (allTime) {
     return allTime.total_count;
   }
 
   let total = 0;
+  const firstYear = new Date(accountCreatedAt).getUTCFullYear();
   const currentYear = new Date().getUTCFullYear();
-  for (let year = 2008; year <= currentYear; year += 1) {
-    const yearly = await search(
+  for (let year = firstYear; year <= currentYear; year += 1) {
+    const yearly = await completeCommitSearch(
+      search,
       `author:${USERNAME} author-date:${year}-01-01..${year}-12-31`
     );
 
-    if (yearly.incomplete_results) {
+    if (!yearly) {
       throw new Error(
-        `GitHub commit search returned incomplete results for ${year}.`
+        `GitHub commit search stayed incomplete for ${year} after retries.`
       );
     }
 
@@ -186,14 +477,14 @@ async function searchCommitTotal() {
 }
 
 async function getProfileData() {
-  const [commits, prs, issues, profile] = await Promise.all([
-    searchCommitTotal(),
-    searchTotal(`author:${USERNAME} type:pr`),
-    searchTotal(`author:${USERNAME} type:issue`),
-    graphql(
-      `
+  const profile = await graphql(
+    `
         query Profile($login: String!) {
+          viewer {
+            login
+          }
           user(login: $login) {
+            createdAt
             contributionsCollection {
               restrictedContributionsCount
               totalCommitContributions
@@ -216,14 +507,36 @@ async function getProfileData() {
           }
         }
       `,
-      { login: USERNAME }
-    ),
-  ]);
+    { login: USERNAME }
+  );
+
+  if (profile.viewer.login.toLowerCase() !== USERNAME.toLowerCase()) {
+    console.warn(
+      `PROFILE_STATS_TOKEN belongs to ${profile.viewer.login}, not ${USERNAME}.`
+    );
+  }
+
+  const tokenCalendar = profile.user.contributionsCollection.contributionCalendar;
+  const publicCalendar = await getPublicContributionCalendar();
+
+  if (tokenCalendar.totalContributions !== publicCalendar.totalContributions) {
+    console.warn(
+      `Contribution total visible to the API token (${tokenCalendar.totalContributions}) ` +
+        `differs from the public GitHub profile (${publicCalendar.totalContributions}); ` +
+        "using the public profile calendar."
+    );
+  }
+
+  // Search endpoints have a strict rate limit, so keep these requests serial.
+  const commits = await searchCommitTotal(profile.user.createdAt);
+  const prs = await searchTotal(`author:${USERNAME} type:pr`);
+  const issues = await searchTotal(`author:${USERNAME} type:issue`);
 
   return {
     commits,
     prs,
     issues,
+    calendar: publicCalendar,
     contributions: profile.user.contributionsCollection,
   };
 }
@@ -297,9 +610,7 @@ function getLanguageTotals(repositories) {
   return [...totals.values()].sort((a, b) => b.size - a.size);
 }
 
-function calculateGrade({ stars, commits, prs, issues, contributions }) {
-  const totalContributions =
-    contributions.contributionCalendar.totalContributions;
+function calculateGrade({ stars, commits, prs, issues, totalContributions }) {
   const score =
     commits * 1 +
     prs * 3 +
@@ -336,20 +647,25 @@ function gradeArc(grade) {
   return `M${cx} ${cy - r}A${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
 }
 
-function statsSvg({ stars, commits, prs, issues, contributions }) {
-  const totalContributions =
-    contributions.contributionCalendar.totalContributions;
+function statsSvg({ stars, commits, prs, issues, contributions, calendar }) {
+  const totalContributions = calendar.totalContributions;
   const contributedTo =
     contributions.totalRepositoriesWithContributedCommits || 0;
 
-  const grade = calculateGrade({ stars, commits, prs, issues, contributions });
+  const grade = calculateGrade({
+    stars,
+    commits,
+    prs,
+    issues,
+    totalContributions,
+  });
 
   const rows = [
     ["☆", "Total Stars", stars],
     ["⊙", "Total Commits", commits],
     ["⎇", "Total PRs", prs],
     ["●", "Total Issues", issues],
-    ["◈", "Contributed to", contributedTo],
+    ["◈", "Repos in API", contributedTo],
   ];
 
   const rowText = rows
@@ -541,7 +857,7 @@ async function main() {
 
   const stars = repositories.reduce((sum, repo) => sum + repo.stargazerCount, 0);
   const languages = getLanguageTotals(repositories);
-  const calendar = profile.contributions.contributionCalendar;
+  const calendar = profile.calendar;
 
   await mkdir(OUT_DIR, { recursive: true });
   await Promise.all([
@@ -569,7 +885,12 @@ async function main() {
         issues: profile.issues,
         stars,
         contributionsLastYear: calendar.totalContributions,
-        privateOrRestricted: profile.contributions.restrictedContributionsCount,
+        tokenContributionsLastYear:
+          profile.contributions.contributionCalendar.totalContributions,
+        restrictedTokenVisible:
+          profile.contributions.restrictedContributionsCount,
+        reposWithCommitsTokenVisible:
+          profile.contributions.totalRepositoriesWithContributedCommits,
         repositories: repositories.length,
         languages: languages.slice(0, 6).map((language) => language.name),
       },
