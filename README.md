@@ -190,11 +190,13 @@ Este reto formó parte de la HackIAthon y nos ayudó a llegar a los <b>18 finali
 
 <div align="center">
 
-<img src="https://github-readme-activity-graph.vercel.app/graph?username=C0qUX&bg_color=0D1117&color=C9D1D9&line=38BDF8&point=A78BFA&area=true&area_color=38BDF8&hide_border=true&custom_title=Contribution%20Activity" alt="Contribution Graph" />
+<img width="100%" src="./assets/stats/contribution-graph.svg" alt="Contribution Activity Graph" />
 
 </div>
 
 ---
+
+## 🐍 Contribution Snake
 
 <div align="center">
 

@@ -784,12 +784,41 @@ function streakSvg(calendar) {
 
 function contributionGraphSvg(calendar) {
   const weeks = calendar.weeks;
-  const cell = 11;
-  const gap = 3;
   const left = 48;
-  const top = 32;
-  const width = left + weeks.length * (cell + gap) + 18;
-  const height = 132;
+  const right = 24;
+  const top = 68;
+  const bottom = 42;
+  const width = 808;
+  const height = 290;
+  const chartWidth = width - left - right;
+  const chartHeight = height - top - bottom;
+  const chartBottom = top + chartHeight;
+  const weeklyTotals = weeks.map((week) =>
+    week.contributionDays.reduce(
+      (sum, day) => sum + day.contributionCount,
+      0
+    )
+  );
+  const rawMaximum = Math.max(1, ...weeklyTotals);
+  const maximum = Math.max(10, Math.ceil(rawMaximum / 10) * 10);
+  const xFor = (index) =>
+    left + (index / Math.max(1, weeks.length - 1)) * chartWidth;
+  const yFor = (value) => top + chartHeight - (value / maximum) * chartHeight;
+  const points = weeklyTotals.map((value, index) => ({
+    date: weeks[index].contributionDays[0]?.date || "",
+    value,
+    x: xFor(index),
+    y: yFor(value),
+  }));
+  const linePath = points
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"}${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+    )
+    .join(" ");
+  const areaPath = `${linePath} L${xFor(weeks.length - 1).toFixed(
+    2
+  )} ${chartBottom} L${left} ${chartBottom} Z`;
 
   const monthLabels = [];
   let lastMonth = "";
@@ -806,47 +835,58 @@ function contributionGraphSvg(calendar) {
     });
     if (month !== lastMonth) {
       monthLabels.push(
-        `<text x="${left + weekIndex * (cell + gap)}" y="18" class="month">${month}</text>`
+        `<text x="${xFor(weekIndex).toFixed(2)}" y="${height - 16}" class="month">${month}</text>`
       );
       lastMonth = month;
     }
   }
 
-  const cells = weeks
-    .map((week, weekIndex) =>
-      week.contributionDays
-        .map((day) => {
-          const x = left + weekIndex * (cell + gap);
-          const y = top + day.weekday * (cell + gap);
-          const color = day.contributionCount ? day.color : COLORS.empty;
-          return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="${color}"><title>${day.contributionCount} contributions on ${day.date}</title></rect>`;
-        })
-        .join("")
+  const grid = Array.from({ length: 5 }, (_, index) => {
+    const y = top + (index / 4) * chartHeight;
+    const value = Math.round(maximum * (1 - index / 4));
+    return `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" class="grid"/>
+      <text x="${left - 10}" y="${y + 4}" class="axis">${value}</text>`;
+  }).join("");
+
+  const pointElements = points
+    .filter((point) => point.value > 0)
+    .map(
+      (point) =>
+        `<circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(
+          2
+        )}" r="3" class="point"><title>${point.value} contribution${
+          point.value === 1 ? "" : "s"
+        } during the week of ${point.date}</title></circle>`
     )
     .join("");
 
   return `
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Contribution Graph</title>
-  <desc id="desc">${calendar.totalContributions} contributions in the last year.</desc>
+  <title id="title">Contribution Activity</title>
+  <desc id="desc">Weekly activity for ${calendar.totalContributions} contributions in the last year.</desc>
+  <defs>
+    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${COLORS.title}" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="${COLORS.title}" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
   <style>
-    .month, .weekday, .note { fill: ${COLORS.muted}; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
-    .total { fill: ${COLORS.text}; font: 600 12px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .title { fill: ${COLORS.title}; font: 700 18px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .subtitle { fill: ${COLORS.muted}; font: 11px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; }
+    .month { fill: ${COLORS.muted}; font: 10px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: middle; }
+    .axis { fill: ${COLORS.muted}; font: 9px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif; text-anchor: end; }
+    .grid { stroke: ${COLORS.grid}; stroke-width: 1; }
+    .line { stroke: ${COLORS.title}; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .point { fill: ${COLORS.accent}; stroke: ${COLORS.bg}; stroke-width: 1.5; }
   </style>
-  <rect width="${width}" height="${height}" rx="4" fill="${COLORS.bg}"/>
-  <text x="${left}" y="116" class="total">${compactNumber(calendar.totalContributions)} contributions in the last year</text>
+  <rect x="0.5" y="0.5" width="${width - 1}" height="${height - 1}" rx="8" fill="${COLORS.bg}" stroke="${COLORS.border}"/>
+  <text x="24" y="31" class="title">Contribution Activity</text>
+  <text x="24" y="50" class="subtitle">${compactNumber(calendar.totalContributions)} contributions in the last year · weekly totals</text>
+  ${grid}
+  <path d="${areaPath}" fill="url(#areaGradient)"/>
+  <path d="${linePath}" class="line"/>
+  ${pointElements}
   ${monthLabels.join("")}
-  <text x="14" y="${top + 1 * (cell + gap) + 9}" class="weekday">Mon</text>
-  <text x="14" y="${top + 3 * (cell + gap) + 9}" class="weekday">Wed</text>
-  <text x="14" y="${top + 5 * (cell + gap) + 9}" class="weekday">Fri</text>
-  ${cells}
-  <text x="${width - 150}" y="116" class="note">Less</text>
-  <rect x="${width - 121}" y="107" width="10" height="10" rx="2" fill="${COLORS.empty}"/>
-  <rect x="${width - 106}" y="107" width="10" height="10" rx="2" fill="#0E4429"/>
-  <rect x="${width - 91}" y="107" width="10" height="10" rx="2" fill="#006D32"/>
-  <rect x="${width - 76}" y="107" width="10" height="10" rx="2" fill="#26A641"/>
-  <rect x="${width - 61}" y="107" width="10" height="10" rx="2" fill="#39D353"/>
-  <text x="${width - 46}" y="116" class="note">More</text>
 </svg>
 `.trimStart();
 }
