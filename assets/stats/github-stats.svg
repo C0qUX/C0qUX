@@ -16,10 +16,10 @@
         <text x="280" y="78" class="value">0</text>
         <text x="28" y="100" class="icon">⊙</text>
         <text x="48" y="100" class="label">Total Commits:</text>
-        <text x="280" y="100" class="value">298</text>
+        <text x="280" y="100" class="value">261</text>
         <text x="28" y="122" class="icon">⎇</text>
         <text x="48" y="122" class="label">Total PRs:</text>
-        <text x="280" y="122" class="value">9</text>
+        <text x="280" y="122" class="value">8</text>
         <text x="28" y="144" class="icon">●</text>
         <text x="48" y="144" class="label">Total Issues:</text>
         <text x="280" y="144" class="value">4</text>
@@ -27,6 +27,6 @@
         <text x="48" y="166" class="label">Repos in API:</text>
         <text x="280" y="166" class="value">12</text>
   <circle cx="370" cy="100" r="35" stroke="#21262D" stroke-width="5"/>
-  <path d="M370 65A35 35 0 1 1 335.00 100.00" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <text x="370" y="108" class="grade">A</text>
+  <path d="M370 65A35 35 0 1 1 346.04 125.51" stroke="#38BDF8" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <text x="370" y="108" class="grade">B+</text>
 </svg>
