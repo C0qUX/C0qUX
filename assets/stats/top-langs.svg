@@ -10,19 +10,19 @@
   <clipPath id="bar"><rect x="30" y="62" width="310" height="8" rx="4"/></clipPath>
   <g clip-path="url(#bar)">
     <rect x="30" y="62" width="310" height="8" fill="#21262D"/>
-    <rect x="30" y="62" width="188.29" height="8" fill="#3178c6" /><rect x="218.29401731232537" y="62" width="34.12" height="8" fill="#f1e05a" /><rect x="252.4177513025371" y="62" width="31.06" height="8" fill="#663399" /><rect x="283.4735801966739" y="62" width="26.74" height="8" fill="#3572A5" /><rect x="310.2154191820911" y="62" width="23.21" height="8" fill="#7355dd" /><rect x="333.42702004186305" y="62" width="6.57" height="8" fill="#A97BFF" />
+    <rect x="30" y="62" width="186.54" height="8" fill="#3178c6" /><rect x="216.53919228699053" y="62" width="33.81" height="8" fill="#f1e05a" /><rect x="250.34490670749622" y="62" width="30.77" height="8" fill="#663399" /><rect x="281.1113076819156" y="62" width="26.49" height="8" fill="#3572A5" /><rect x="307.6039234102962" y="62" width="23.00" height="8" fill="#7355dd" /><rect x="330.5992014221719" y="62" width="9.40" height="8" fill="#A97BFF" />
   </g>
   
         <circle cx="30" cy="96" r="5" fill="#3178c6"/>
-        <text x="44" y="100" class="legend">TypeScript (60.74%)</text>
+        <text x="44" y="100" class="legend">TypeScript (60.17%)</text>
         <circle cx="200" cy="96" r="5" fill="#f1e05a"/>
-        <text x="214" y="100" class="legend">JavaScript (11.01%)</text>
+        <text x="214" y="100" class="legend">JavaScript (10.91%)</text>
         <circle cx="30" cy="121" r="5" fill="#663399"/>
-        <text x="44" y="125" class="legend">CSS (10.02%)</text>
+        <text x="44" y="125" class="legend">CSS (9.92%)</text>
         <circle cx="200" cy="121" r="5" fill="#3572A5"/>
-        <text x="214" y="125" class="legend">Python (8.63%)</text>
+        <text x="214" y="125" class="legend">Python (8.55%)</text>
         <circle cx="30" cy="146" r="5" fill="#7355dd"/>
-        <text x="44" y="150" class="legend">C# (7.49%)</text>
+        <text x="44" y="150" class="legend">C# (7.42%)</text>
         <circle cx="200" cy="146" r="5" fill="#A97BFF"/>
-        <text x="214" y="150" class="legend">Kotlin (2.12%)</text>
+        <text x="214" y="150" class="legend">Kotlin (3.03%)</text>
 </svg>
