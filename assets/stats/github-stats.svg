@@ -22,7 +22,7 @@
         <text x="280" y="122" class="value">11</text>
         <text x="28" y="144" class="icon">●</text>
         <text x="48" y="144" class="label">Total Issues:</text>
-        <text x="280" y="144" class="value">4</text>
+        <text x="280" y="144" class="value">0</text>
         <text x="28" y="166" class="icon">◈</text>
         <text x="48" y="166" class="label">Repos in API:</text>
         <text x="280" y="166" class="value">16</text>
